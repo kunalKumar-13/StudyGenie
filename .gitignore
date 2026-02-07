@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+
+# Virtual environments
+venv/
+venv*/
+.venv/
+
+# Environment variables (contains secrets)
+.env
+
+# SQLite database (auto-generated on startup)
+*.db
+
+# ChromaDB (legacy, not used)
+chroma_db/
+
+# FAISS index (rebuilt on document upload)
+backend/data/faiss_index/
+
+# Node.js
+node_modules/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+*.log
