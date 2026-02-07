@@ -1,18 +1,22 @@
-# StudyGenie — Local-First AI Study Assistant
+# StudyGenie — RAG-Based AI Study Assistant
 
-StudyGenie is a **local-first** AI-powered study assistant that lets you upload your notes (PDFs, text files, markdown) and ask questions about them in a chat interface. It uses **Retrieval-Augmented Generation (RAG)** to give you accurate, source-cited answers grounded in your actual study materials — not hallucinated responses.
+StudyGenie is a **local-first**, full-stack Generative AI study assistant that lets you upload your notes (PDFs, text files, markdown) and ask questions about them in a chat interface. It uses **Retrieval-Augmented Generation (RAG)** to give you accurate, source-cited answers grounded in your actual study materials — not hallucinated responses.
+
+This project explores real-world GenAI trade-offs — how RAG works end-to-end, how local models behave under real constraints, and how to build reliable, grounded responses with source citations.
 
 > **Why local-first?** This project intentionally runs on a local open-source LLM via [Ollama](https://ollama.com) to explore the real-world constraints of GenAI systems — latency, inference cost, model limitations, and how AI performs outside ideal cloud environments. No paid API is required to run this.
+
+> **Note:** This project is designed to run locally and is not deployed publicly to avoid reliance on paid APIs.
 
 ---
 
 ## Screenshots
 
-| Login | Chat with Streaming | Sources & Math |
-|-------|---------------------|----------------|
-| ![Login](https://via.placeholder.com/300x200?text=Login+Page) | ![Chat](https://via.placeholder.com/300x200?text=Chat+Interface) | ![Sources](https://via.placeholder.com/300x200?text=Sources+%26+Math) |
+| Login | Chat with Streaming | RAG Answer with Sources |
+|-------|---------------------|-------------------------|
+| ![Login](screenshots/login.png) | ![Chat](screenshots/chat.png) | ![Sources](screenshots/sources.png) |
 
-> Replace the placeholder URLs above with actual screenshots from your app.
+> **To add screenshots:** Take screenshots of the Login page, Chat interface, and a RAG answer showing sources, then save them as `screenshots/login.png`, `screenshots/chat.png`, and `screenshots/sources.png`.
 
 ---
 
@@ -34,11 +38,11 @@ User asks a question ──► Smart Router decides: needs docs?                
                                                     Chat bubble ◄── tokens arrive in real-time
 ```
 
-1. **Upload** — Drop a PDF, `.txt`, or `.md` file. It gets split into chunks (~1000 chars) and embedded into vectors using an embedding model.
-2. **Ask** — Type your question. A smart router decides whether to search your documents (RAG) or answer directly (math, greetings, general knowledge).
-3. **Retrieve** — If RAG is needed, the question is embedded and FAISS finds the most relevant chunks from your notes. Irrelevant matches are filtered out by a relevance threshold.
-4. **Generate** — The relevant context + your question + conversation history are sent to the LLM. The response streams back token-by-token so you see words appear in real-time.
-5. **Cite** — Sources are shown as collapsible tags so you know exactly which document the answer came from.
+1. **Upload** — Drop a PDF, `.txt`, or `.md` file → split into chunks → embedded into vectors
+2. **Ask** — Smart router decides: search your docs (RAG) or answer directly (math, greetings, general knowledge)
+3. **Retrieve** — Question is embedded → FAISS finds the most relevant chunks → irrelevant matches filtered by a score threshold
+4. **Generate** — Context + question + chat history → LLM → response streamed token-by-token in real-time
+5. **Cite** — Collapsible source tags show exactly which document each answer came from
 
 ---
 
@@ -167,7 +171,7 @@ copy .env.example .env       # Windows
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The backend will start at **http://localhost:8000**.
+The backend API will be available on port `8000`.
 
 ### 3. Set up the Frontend
 
@@ -180,8 +184,6 @@ npm install
 # Start dev server
 npm run dev
 ```
-
-The frontend will start at **http://localhost:5173**.
 
 ### 4. Use the App
 
@@ -225,6 +227,8 @@ Building this project taught me:
 - **Smart query routing** to avoid unnecessary expensive operations
 - **Relevance filtering** with vector similarity scores to prevent hallucinated citations
 - Building a **full-stack app** with React + FastAPI + SQLAlchemy + FAISS
+
+This project deepened my understanding of latency, model quality trade-offs, real-time streaming systems (SSE), and multi-model integration in production-like settings.
 
 ---
 
