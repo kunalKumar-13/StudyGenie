@@ -1,6 +1,6 @@
 # StudyGenie — RAG-Based AI Study Assistant
 
-A local-first, full-stack GenAI study assistant. Upload your notes and ask questions — answers are grounded in your actual documents using a **RAG pipeline**, not hallucinated.
+A local-first, full-stack GenAI study assistant with a premium, polished UI. Upload your notes and ask questions — answers are grounded in your actual documents using a **RAG pipeline**, not hallucinated.
 
 > This project is designed to run locally and is not deployed publicly to avoid reliance on paid APIs.
 

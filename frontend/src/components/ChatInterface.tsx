@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Upload, Loader2, CheckCircle, AlertCircle, Sparkles, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { Send, Upload, Loader2, CheckCircle, AlertCircle, Sparkles, BookOpen, FileText, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -34,12 +34,12 @@ interface ChatInterfaceProps {
 const WELCOME_MSG: Message = {
   id: 'welcome',
   role: 'assistant',
-  content: "Hey there! 👋 I'm **StudyGenie** — your AI study assistant.\n\nUpload your notes or documents and ask me anything. I'll give you clear, step-by-step explanations based on your materials.",
+  content: "Hey there! 👋 I'm **StudyGenie** — your AI study assistant.\n\nUpload your notes or documents and ask me anything. I'll give you clear, step-by-step explanations with source citations.",
 };
 
-/** Collapsible references section — shows source doc names only, expandable */
+/** Enhanced collapsible sources panel */
 const SourcesPanel: React.FC<{ sources: Source[] }> = ({ sources }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   // De-duplicate by source name
   const seen = new Set<string>();
@@ -50,30 +50,38 @@ const SourcesPanel: React.FC<{ sources: Source[] }> = ({ sources }) => {
     return true;
   });
 
+  if (unique.length === 0) return null;
+
   return (
-    <div className="mt-2.5 pt-2 border-t border-gray-100">
+    <div className="mt-3 pt-3 border-t border-slate-100">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors uppercase tracking-widest group"
+        className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-violet-600 transition-colors group mb-2"
       >
-        <BookOpen size={10} className="group-hover:text-violet-400" />
-        {unique.length} source{unique.length !== 1 ? 's' : ''} used
-        {open ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+        <BookOpen size={12} className="group-hover:text-violet-500" />
+        <span>{unique.length} source{unique.length !== 1 ? 's' : ''} referenced</span>
+        <div className={clsx("ml-auto w-4 h-4 rounded bg-slate-100 flex items-center justify-center transition-transform", open && "rotate-180")}>
+          <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 11L3 6h10l-5 5z"/>
+          </svg>
+        </div>
       </button>
 
       {open && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
+        <div className="space-y-1.5 animate-slideDown">
           {unique.map((source, idx) => (
-            <span
+            <div
               key={idx}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-violet-50 text-violet-700 border border-violet-100 rounded-md text-[11px] font-medium"
+              className="group flex items-start gap-2 px-3 py-2 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100/50 rounded-lg hover:border-violet-200 transition-all duration-200 hover:shadow-sm"
             >
-              <BookOpen size={10} className="text-violet-400" />
-              {prettifySource(source.metadata?.source)}
-              {source.metadata?.page !== undefined && (
-                <span className="text-violet-400 ml-0.5">p.{source.metadata.page + 1}</span>
-              )}
-            </span>
+              <FileText size={13} className="text-violet-500 mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-slate-700 truncate">{prettifySource(source.metadata?.source)}</p>
+                {source.metadata?.page !== undefined && (
+                  <p className="text-[10px] text-slate-500">Page {source.metadata.page + 1}</p>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -230,57 +238,65 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ sessionId, onSessi
   };
 
   return (
-    <div className="flex flex-col h-screen flex-1 bg-[#f8f9fc]">
+    <div className="flex flex-col h-screen flex-1 bg-slate-50 relative overflow-hidden">
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-50/30 via-transparent to-indigo-50/30 pointer-events-none" />
+      
       {/* Header */}
-      <header className="px-5 py-3 bg-white border-b border-gray-200/80 flex justify-between items-center z-10">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-md shadow-violet-200">
-            <Sparkles size={18} className="text-white" />
+      <header className="relative z-10 px-6 py-4 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 flex justify-between items-center shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-200">
+            <Sparkles size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900 leading-tight tracking-tight">StudyGenie</h1>
-            <p className="text-[10px] text-gray-400 leading-tight font-medium">AI-Powered Study Assistant</p>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent leading-tight">StudyGenie</h1>
+            <p className="text-[10px] text-slate-500 font-medium">AI Study Assistant</p>
           </div>
         </div>
+        
         <div className="flex items-center gap-3">
           {uploadStatus && (
             <div className={clsx(
-              "flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full animate-fadeIn font-medium",
+              "flex items-center gap-2 text-xs px-4 py-2 rounded-full animate-slideDown font-medium shadow-sm",
               uploadStatus.success ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-600 border border-red-200"
             )}>
-              {uploadStatus.success ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-              {uploadStatus.text}
+              {uploadStatus.success ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+              <span>{uploadStatus.text}</span>
+              <button onClick={() => setUploadStatus(null)} className="ml-1 hover:bg-black/5 rounded-full p-0.5">
+                <X size={12} />
+              </button>
             </div>
           )}
           <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".pdf,.txt,.md" />
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 flex items-center gap-1.5 transition-all duration-200 shadow-sm shadow-violet-200 hover:shadow-md hover:shadow-violet-200"
+            className="group relative px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/40 hover:-translate-y-0.5 overflow-hidden"
           >
-            {isUploading ? <Loader2 className="animate-spin" size={14} /> : <Upload size={14} />}
-            Upload Notes
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+            {isUploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+            <span className="relative z-10">Upload Document</span>
           </button>
         </div>
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+      <div className="flex-1 overflow-y-auto relative z-10">
+        <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
           {messages.map((msg) => (
-            <div key={msg.id} className={clsx("flex gap-3 animate-slideUp", msg.role === 'user' ? "justify-end" : "")}>
+            <div key={msg.id} className={clsx("flex gap-4 animate-slideUp", msg.role === 'user' ? "justify-end" : "")}>
               {msg.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-violet-200 mt-0.5">
-                  <Sparkles size={14} className="text-white" />
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-200 ring-2 ring-white">
+                  <Sparkles size={16} className="text-white" />
                 </div>
               )}
 
               <div className={clsx(
-                "max-w-[80%] rounded-2xl px-4 py-3 text-[14px] leading-relaxed",
+                "max-w-[75%] rounded-2xl px-5 py-4 text-[14.5px] leading-relaxed transition-all duration-200",
                 msg.role === 'user'
-                  ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-br-md shadow-md shadow-violet-200"
-                  : "bg-white text-gray-800 border border-gray-200/80 rounded-bl-md shadow-sm",
-                msg.isError && "!bg-red-50 !border-red-200 !text-red-700",
+                  ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-br-sm shadow-xl shadow-violet-200/50"
+                  : "bg-white text-slate-800 border border-slate-200/60 rounded-bl-sm shadow-lg hover:shadow-xl",
+                msg.isError && "!bg-red-50 !border-red-200 !text-red-700 !shadow-red-100",
               )}>
                 <div className={clsx(
                   "prose prose-sm max-w-none break-words",
@@ -293,26 +309,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ sessionId, onSessi
                     components={{
                       code({ node, inline, className, children, ...props }: any) {
                         return !inline ? (
-                          <div className="bg-gray-900 text-gray-100 p-3 rounded-lg my-2 overflow-x-auto text-xs font-mono">
+                          <div className="bg-slate-900 text-slate-100 p-4 rounded-xl my-3 overflow-x-auto text-xs font-mono border border-slate-700 shadow-inner">
                             <code className={className} {...props}>{children}</code>
                           </div>
                         ) : (
-                          <code className={clsx("px-1.5 py-0.5 rounded text-xs font-mono", msg.role === 'user' ? "bg-white/20 text-white" : "bg-violet-50 text-violet-700 border border-violet-100")} {...props}>
+                          <code className={clsx("px-2 py-0.5 rounded-md text-xs font-mono", msg.role === 'user' ? "bg-white/20 text-white" : "bg-violet-50 text-violet-700 border border-violet-100")} {...props}>
                             {children}
                           </code>
                         );
                       },
                       p({ children }) {
-                        return <p className="mb-2 last:mb-0">{children}</p>;
+                        return <p className="mb-3 last:mb-0 text-[14.5px]">{children}</p>;
                       },
                       ul({ children }) {
-                        return <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>;
+                        return <ul className="list-disc pl-5 mb-3 space-y-1.5">{children}</ul>;
                       },
                       ol({ children }) {
-                        return <ol className="list-decimal pl-4 mb-2 space-y-1">{children}</ol>;
+                        return <ol className="list-decimal pl-5 mb-3 space-y-1.5">{children}</ol>;
                       },
                       strong({ children }) {
-                        return <strong className="font-semibold">{children}</strong>;
+                        return <strong className="font-semibold text-slate-900">{children}</strong>;
+                      },
+                      a({ children, href }) {
+                        return <a href={href} className="text-violet-600 hover:text-violet-700 underline" target="_blank" rel="noopener noreferrer">{children}</a>;
                       },
                     }}
                   >
@@ -321,38 +340,38 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ sessionId, onSessi
 
                   {/* Streaming cursor */}
                   {msg.isStreaming && msg.content && (
-                    <span className="inline-block w-1.5 h-4 bg-violet-500 rounded-sm animate-pulse ml-0.5 align-text-bottom" />
+                    <span className="inline-block w-1.5 h-5 bg-violet-500 rounded-sm animate-pulse ml-1 align-text-bottom" />
                   )}
                 </div>
 
-                {/* Sources — collapsible, clean */}
+                {/* Sources — enhanced, always visible when present */}
                 {msg.sources && msg.sources.length > 0 && !msg.isStreaming && (
                   <SourcesPanel sources={msg.sources} />
                 )}
               </div>
 
               {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center shrink-0 text-white text-[10px] font-bold shadow-sm mt-0.5 uppercase tracking-wide">
+                <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-white text-[11px] font-bold shadow-lg ring-2 ring-white uppercase tracking-wide">
                   You
                 </div>
               )}
             </div>
           ))}
 
-          {/* Loading dots when streaming hasn't started yet */}
+          {/* Loading indicator when waiting for stream */}
           {isLoading && messages.length > 0 && messages[messages.length - 1]?.content === '' && (
-            <div className="flex gap-3 animate-slideUp">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-violet-200">
-                <Sparkles size={14} className="text-white" />
+            <div className="flex gap-4 animate-slideUp">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-200 ring-2 ring-white">
+                <Sparkles size={16} className="text-white" />
               </div>
-              <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-md border border-gray-200/80 shadow-sm">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="bg-white px-5 py-4 rounded-2xl rounded-bl-sm border border-slate-200/60 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <div className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
-                  <span className="text-xs text-gray-400">Thinking...</span>
+                  <span className="text-xs text-slate-500 font-medium">Thinking...</span>
                 </div>
               </div>
             </div>
@@ -363,35 +382,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ sessionId, onSessi
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white border-t border-gray-200/80">
-        <div className="max-w-3xl mx-auto">
-          <div className="relative flex items-end bg-gray-50 border border-gray-200 rounded-2xl focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-50 transition-all duration-200 shadow-sm">
+      <div className="relative z-10 p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200/50 shadow-2xl">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative flex items-end bg-white border-2 border-slate-200 rounded-2xl focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10 transition-all duration-200 shadow-lg hover:shadow-xl">
             <textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about your notes... (Shift+Enter for new line)"
+              placeholder="Ask anything about your notes... (Shift+Enter for new line)"
               rows={1}
-              className="flex-1 bg-transparent py-3.5 pl-4 pr-14 text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none max-h-[150px] leading-relaxed"
+              className="flex-1 bg-transparent py-4 pl-5 pr-16 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none max-h-[150px] leading-relaxed"
               disabled={isLoading}
-              style={{ color: '#1f2937' }}
+              style={{ color: '#1e293b' }}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
               className={clsx(
-                "absolute right-2 bottom-2 p-2.5 rounded-xl transition-all duration-200 shadow-sm",
+                "absolute right-2 bottom-2 p-3 rounded-xl transition-all duration-200 shadow-lg group overflow-hidden",
                 input.trim() && !isLoading
-                  ? "text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 hover:shadow-md shadow-violet-200"
-                  : "text-gray-300 bg-gray-100 cursor-not-allowed"
+                  ? "text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 hover:shadow-xl shadow-violet-500/30 hover:-translate-y-0.5"
+                  : "text-slate-300 bg-slate-100 cursor-not-allowed shadow-slate-200"
               )}
             >
-              {isLoading ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              {isLoading ? <Loader2 className="animate-spin relative z-10" size={18} /> : <Send size={18} className="relative z-10" />}
             </button>
           </div>
-          <p className="text-[10px] text-center text-gray-300 mt-2 font-medium">
-            StudyGenie can make mistakes — always verify important information.
+          <p className="text-[10px] text-center text-slate-400 mt-3 font-medium">
+            StudyGenie is powered by AI and can make mistakes. Always verify important information.
           </p>
         </div>
       </div>
