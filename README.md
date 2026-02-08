@@ -164,8 +164,3 @@ Gemini is used for chat with automatic Ollama fallback if quota is exceeded.
 
 This project deepened my understanding of latency, model quality trade-offs, real-time streaming systems, and multi-model integration.
 
----
-
-## License
-
-MIT
